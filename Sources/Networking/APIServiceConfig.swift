@@ -8,10 +8,10 @@
 import Foundation
 
 public struct APIServiceConfig {
-    static let shared = APIServiceConfig()
+    public static let shared = APIServiceConfig()
     var baseURL = ""
     
-    mutating func setup(baseURL: String) {
+    public mutating func setup(baseURL: String) {
         self.baseURL = baseURL
     }
 }
