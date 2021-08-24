@@ -6,17 +6,18 @@
 //
 
 import Foundation
+import Combine
 
-public struct APIServiceConfig {
+public class APIServiceConfig {
     public static let shared = APIServiceConfig()
-    var baseURL = ""
+    public var baseURL = ""
     
-    public mutating func setup(baseURL: String) {
+    public func setup(baseURL: String) {
         self.baseURL = baseURL
     }
 }
 
 public enum APIService {
-    static let apiClient = APIClient()
-    static let baseURL = URL(string: APIServiceConfig.shared.baseURL)!
+    public static let apiClient = APIClient()
+    public static let baseURL = URL(string: APIServiceConfig.shared.baseURL)!
 }
