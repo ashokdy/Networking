@@ -9,15 +9,8 @@ import Foundation
 import Combine
 
 public struct APIClient {
-    
-    public struct Response<T> {
-        public let value: T
-        public let response: URLResponse
-    }
-    
     public init() { }
-    
-    public func run<T: Decodable>(_ request: URLRequest) -> AnyPublisher<Response<T>, Error> {
+    public func makeService<T: Decodable>(_ request: URLRequest) -> AnyPublisher<Response<T>, Error> {
         return URLSession.shared
             .dataTaskPublisher(for: request)
             .tryMap { result -> Response<T> in
@@ -27,4 +20,9 @@ public struct APIClient {
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
+}
+
+public struct Response<T> {
+    public let value: T
+    public let response: URLResponse
 }

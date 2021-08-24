@@ -11,6 +11,15 @@ public protocol APIPath {
     var subURL: String { get }
     var httpMethod: HTTPMethod { get }
     var params: [String: Any] { get }
+    var headers: [String: String] { get }
+    var queryURL: String { get }
+}
+
+extension APIPath {
+    public var httpMethod: HTTPMethod { .get }
+    public var params: [String: Any] { [:] }
+    public var headers: [String: String] { [:] }
+    public var queryURL: String { "" }
 }
 
 public enum HTTPMethod: String {
