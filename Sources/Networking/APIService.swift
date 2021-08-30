@@ -36,7 +36,6 @@ public extension APIService {
         var request = URLRequest(url: components.url!)
         if !path.queryURL.isEmpty {
             request = URLRequest(url: URL(string: APIServiceConfig.shared.apiData.baseURL + path.subURL + path.queryURL)!)
-            print(path.queryURL)
         }
         if isBasic {
             request.allHTTPHeaderFields = ["Authorization": "Basic \(APIServiceConfig.shared.apiData.basicToken)"]
