@@ -11,6 +11,7 @@ import Combine
 public struct APIClient {
     public init() { }
     public func makeService<T: Decodable>(_ request: URLRequest) -> AnyPublisher<Response<T>, Error> {
+        print(request.url)
         return URLSession.shared
             .dataTaskPublisher(for: request)
             .tryMap { result -> Response<T> in
