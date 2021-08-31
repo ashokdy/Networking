@@ -44,7 +44,11 @@ public extension APIService {
         }
         switch path.httpMethod {
         case .post:
-            request.httpBody = try? JSONSerialization.data(withJSONObject: path.params, options: .prettyPrinted)
+            do {
+                request.httpBody = try JSONSerialization.data(withJSONObject: path.params, options: .prettyPrinted)
+            } catch {
+                print(error)
+            }
         default: break
         }
         request.httpMethod = path.httpMethod.rawValue
