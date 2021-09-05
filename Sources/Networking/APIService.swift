@@ -11,7 +11,8 @@ import Combine
 public protocol APIService {
     var apiClient: APIClient { get }
     var isBasic: Bool { get }
-    var neesQueryItems: Bool { get }
+    var needsQueryItems: Bool { get }
+    var hasData: Bool { get }
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error>
 }
 
@@ -19,14 +20,15 @@ public extension APIService {
     var apiClient: APIClient {
         APIClient()
     }
-    var neesQueryItems: Bool { false }
+    var needsQueryItems: Bool { false }
     var isBasic: Bool { false }
-    
+    var hasData: Bool { false }
+
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path.subURL), resolvingAgainstBaseURL: true)
         else { fatalError("Couldn't create URLComponents") }
-        if neesQueryItems {
+        if needsQueryItems {
             var queryItems = [URLQueryItem]()
             for param in path.params {
                 queryItems.append(URLQueryItem(name: param.key, value: param.value as? String))
@@ -37,21 +39,31 @@ public extension APIService {
         if !path.queryURL.isEmpty {
             request = URLRequest(url: URL(string: APIServiceConfig.shared.apiData.baseURL + path.subURL + path.queryURL)!)
         }
-        if isBasic {
-            request.allHTTPHeaderFields = ["Authorization": "Basic \(APIServiceConfig.shared.apiData.basicToken)"]
-        } else {
-            request.allHTTPHeaderFields = ["Authorization": "Bearer \(APIServiceConfig.shared.apiData.accessToken)"]
+        if hasData {
+            request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
         }
+        if isBasic {
+            request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
+        } else {
+            request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpMethod = path.httpMethod.rawValue
+
         switch path.httpMethod {
         case .post:
-            do {
-                request.httpBody = try JSONSerialization.data(withJSONObject: path.params, options: .prettyPrinted)
-            } catch {
-                print(error)
+            if let data = path.data {
+                print(String(data: data, encoding: .utf8))
+                request.httpBody = data
+            } else if !needsQueryItems {
+                do {
+                    request.httpBody = try JSONSerialization.data(withJSONObject: path.params, options: .prettyPrinted)
+                } catch {
+                    print(error)
+                }
             }
         default: break
         }
-        request.httpMethod = path.httpMethod.rawValue
+        print(request)
         return apiClient.makeService(request)
             .map(\.value)
             .eraseToAnyPublisher()

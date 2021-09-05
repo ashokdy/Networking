@@ -13,6 +13,7 @@ public protocol APIPath {
     var params: [String: Any] { get }
     var headers: [String: String] { get }
     var queryURL: String { get }
+    var data: Data? { get }
 }
 
 extension APIPath {
@@ -20,6 +21,7 @@ extension APIPath {
     public var params: [String: Any] { [:] }
     public var headers: [String: String] { [:] }
     public var queryURL: String { "" }
+    public var data: Data? { nil }
 }
 
 public enum HTTPMethod: String {
