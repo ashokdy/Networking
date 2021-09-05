@@ -23,7 +23,7 @@ public extension APIService {
     var needsQueryItems: Bool { false }
     var isBasic: Bool { false }
     var hasData: Bool { false }
-
+    
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path.subURL), resolvingAgainstBaseURL: true)
@@ -34,6 +34,7 @@ public extension APIService {
                 queryItems.append(URLQueryItem(name: param.key, value: param.value as? String))
             }
             components.queryItems = queryItems
+            print("Added the params as query items \(queryItems)")
         }
         var request = URLRequest(url: components.url!)
         if !path.queryURL.isEmpty {
@@ -48,22 +49,24 @@ public extension APIService {
             request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
         }
         request.httpMethod = path.httpMethod.rawValue
-
+        print(request.url ?? "")
+        print(request.httpMethod ?? "")
+        print(request.allHTTPHeaderFields ?? "")
         switch path.httpMethod {
         case .post:
             if let data = path.data {
-                print(String(data: data, encoding: .utf8))
+                print("HTTP Direct data \(String(data: data, encoding: .utf8) ?? "")")
                 request.httpBody = data
             } else if !needsQueryItems {
                 do {
                     request.httpBody = try JSONSerialization.data(withJSONObject: path.params, options: .prettyPrinted)
+                    print("HTTP params data \(String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "")")
                 } catch {
-                    print(error)
+                    print("exception on converting params to body data \(error)")
                 }
             }
         default: break
         }
-        print(request)
         return apiClient.makeService(request)
             .map(\.value)
             .eraseToAnyPublisher()
