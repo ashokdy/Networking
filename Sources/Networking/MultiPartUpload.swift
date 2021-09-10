@@ -7,8 +7,8 @@
 
 import Foundation
 
-class MultiPartUpload {
-    func convertFormField(named name: String, value: String, using boundary: String) -> String {
+public class MultiPartUpload {
+    public func convertFormField(named name: String, value: String, using boundary: String) -> String {
         var fieldString = "--\(boundary)\r\n"
         fieldString += "Content-Disposition: form-data; name=\"\(name)\"\r\n"
         fieldString += "\r\n"
@@ -17,7 +17,7 @@ class MultiPartUpload {
         return fieldString
     }
     
-    func convertFileData(fieldName: String, fileName: String, mimeType: String, fileData: Data, using boundary: String) -> Data {
+    public func convertFileData(fieldName: String, fileName: String, mimeType: String, fileData: Data, using boundary: String) -> Data {
         let data = NSMutableData()
         
         data.appendString("--\(boundary)\r\n")
@@ -29,7 +29,7 @@ class MultiPartUpload {
         return data as Data
     }
     
-    func playground() {
+    public func playground() {
         
         let fileData = try! Data(contentsOf: URL(fileURLWithPath: "/Users/ashok.yerra/Downloads/sample.jpg"), options: .mappedIfSafe)
         let fileContent = fileData.base64EncodedString() //10485760
@@ -42,7 +42,7 @@ class MultiPartUpload {
         var request = URLRequest(url: URL(string: "https://dev.healthy-u.ae/api/patients/")!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        request.addValue("Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJsYXJ5cGFnZTAxIiwic2NvcGUiOlsib3BlbmlkIl0sImV4cCI6MTYzMTIyNDMxNywiaWF0IjoxNjMxMjIxMzE3LCJhdXRob3JpdGllcyI6WyJST0xFX1BBVElFTlQiXSwianRpIjoiNDM5Njc4MjktYjE2OC00MTRkLTlkMTgtYjA5ZGUxZmE2MGI4IiwiY2xpZW50X2lkIjoid2ViX2FwcCJ9.QPqx7arhSGFUmKE1QGcMwlbKwlNL78OiwySbbYFYpD9RtWb2Hlgzeoxv2_vkX8l2JPIZFtXIyP34NGP5TSTfAB1eRbF5-ttZV6R9pcW4auFMQnEFSOTOkC7l5twlGM90biEnw9fbQKd3YFkGDZPL1d7MVWJQENAjEnli94ziXoKgsQvD4ceIIEnpNc4DF0ZJOKqAVr3ekJkHb7sYboz9JrNKRSiOxE5QTXcxuI3DqUHsZJSh3_E5-GapvGqvvhDJ5ZygqgM0KbIJBoGF7oQiqFs7bLDET1L1xXsvnWq1BiwYamliLJ0JV9UWOl9B9LdC9_ADPEGpmNmvbdtlg8cdXw", forHTTPHeaderField: "authorization")
+        request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "authorization")
         
         let httpBody = NSMutableData()
         
@@ -64,12 +64,13 @@ class MultiPartUpload {
         
         
         URLSession.shared.dataTask(with: request) { data, response, error in
-            print(String(data: data!, encoding: .utf8))
-            print(error!)
-            // handle the response here
+            guard let data = data else {
+                print(String(describing: error))
+                return
+            }
+            print(String(data: data, encoding: .utf8)!)
         }.resume()
     }
-    
 }
 
 extension NSMutableData {
