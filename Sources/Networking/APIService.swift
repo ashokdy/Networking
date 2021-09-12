@@ -44,6 +44,7 @@ public extension APIService {
         if hasData {
             request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
         }
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         if isBasic {
             request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
         } else {
@@ -53,6 +54,7 @@ public extension APIService {
         print(request.url ?? "")
         print(request.httpMethod ?? "")
         print(request.allHTTPHeaderFields ?? "")
+        print(path.params)
         switch path.httpMethod {
         case .post:
             if let data = path.data {
