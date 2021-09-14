@@ -115,14 +115,6 @@ public extension APIService {
         return apiClient.makeService(request)
             .map(\.value)
             .eraseToAnyPublisher()
-        
-        //        URLSession.shared.dataTask(with: request) { data, response, error in
-        //            guard let data = data else {
-        //                print(String(describing: error))
-        //                return
-        //            }
-        //            print(String(data: data, encoding: .utf8)!)
-        //        }.resume()
     }
     
     private func convertFormField(named name: String, value: String, using boundary: String) -> String {
