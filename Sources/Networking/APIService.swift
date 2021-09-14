@@ -12,6 +12,7 @@ public protocol APIService {
     var apiClient: APIClient { get }
     var isBasic: Bool { get }
     var needsQueryItems: Bool { get }
+    var needsHeaders: Bool { get }
     var hasData: Bool { get }
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error>
     func multiPartAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error>
@@ -24,7 +25,8 @@ public extension APIService {
     var needsQueryItems: Bool { false }
     var isBasic: Bool { false }
     var hasData: Bool { false }
-    
+    var needsHeaders: Bool { true }
+
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path.subURL), resolvingAgainstBaseURL: true)
@@ -41,6 +43,7 @@ public extension APIService {
         if !path.queryURL.isEmpty {
             request = URLRequest(url: URL(string: APIServiceConfig.shared.apiData.baseURL + path.subURL + path.queryURL)!)
         }
+        if needsHeaders {
         if hasData {
             request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
         }
@@ -49,6 +52,7 @@ public extension APIService {
             request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
         } else {
             request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
+        }
         }
         request.httpMethod = path.httpMethod.rawValue
         print(request.url ?? "")
