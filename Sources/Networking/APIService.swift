@@ -26,7 +26,7 @@ public extension APIService {
     var isBasic: Bool { false }
     var hasData: Bool { false }
     var needsHeaders: Bool { true }
-
+    
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path.subURL), resolvingAgainstBaseURL: true)
@@ -39,20 +39,24 @@ public extension APIService {
             components.queryItems = queryItems
             print("Added the params as query items \(queryItems)")
         }
-        var request = URLRequest(url: components.url!)
+        guard let urlString = components.url?.absoluteString.removingPercentEncoding,
+              let url = URL(string: urlString) else {
+            fatalError("Couldn't create URLComponents")
+        }
+        var request = URLRequest(url: url)
         if !path.queryURL.isEmpty {
             request = URLRequest(url: URL(string: APIServiceConfig.shared.apiData.baseURL + path.subURL + path.queryURL)!)
         }
         if needsHeaders {
-        if hasData {
-            request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
-        }
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        if isBasic {
-            request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
-        } else {
-            request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
-        }
+            if hasData {
+                request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
+            }
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            if isBasic {
+                request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
+            } else {
+                request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
+            }
         }
         request.httpMethod = path.httpMethod.rawValue
         print(request.url ?? "")
