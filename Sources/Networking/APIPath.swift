@@ -11,6 +11,7 @@ public protocol APIPath {
     var subURL: String { get }
     var httpMethod: HTTPMethod { get }
     var params: [String: Any] { get }
+    var paramsArray: [Any] { get }
     var headers: [String: String] { get }
     var queryURL: String { get }
     var data: Data? { get }
@@ -22,6 +23,7 @@ extension APIPath {
     public var headers: [String: String] { [:] }
     public var queryURL: String { "" }
     public var data: Data? { nil }
+    public var paramsArray: [Any] { [] }
 }
 
 public enum HTTPMethod: String {

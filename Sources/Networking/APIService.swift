@@ -13,8 +13,8 @@ public protocol APIService {
     var isBasic: Bool { get }
     var needsQueryItems: Bool { get }
     var hasData: Bool { get }
-    func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error>
-    func multiPartAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error>
+    func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError>
+    func multiPartAPI<T: Decodable>(_ path: APIPath, imagePath: String, dictString: String) -> AnyPublisher<T, APIError>
 }
 
 public extension APIService {
@@ -25,7 +25,7 @@ public extension APIService {
     var isBasic: Bool { false }
     var hasData: Bool { false }
     
-    func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error> {
+    func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
         guard var components = URLComponents(url: baseURL.appendingPathComponent(path.subURL), resolvingAgainstBaseURL: true)
         else { fatalError("Couldn't create URLComponents") }
@@ -37,14 +37,22 @@ public extension APIService {
             components.queryItems = queryItems
             print("Added the params as query items \(queryItems)")
         }
-        var request = URLRequest(url: components.url!)
+        guard let urlString = components.url?.absoluteString.removingPercentEncoding,
+              let url = URL(string: urlString) else {
+            fatalError("Couldn't create URLComponents")
+        }
+        var request = URLRequest(url: url)
         if !path.queryURL.isEmpty {
             request = URLRequest(url: URL(string: APIServiceConfig.shared.apiData.baseURL + path.subURL + path.queryURL)!)
+        } else if !needsQueryItems {
+            let apiURL = APIServiceConfig.shared.apiData.baseURL + path.subURL
+            request = URLRequest(url: URL(string: apiURL.removingPercentEncoding!)!)
         }
         if hasData {
             request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
+        } else {
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         }
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         if isBasic {
             request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
         } else {
@@ -55,6 +63,7 @@ public extension APIService {
         print(request.httpMethod ?? "")
         print(request.allHTTPHeaderFields ?? "")
         print(path.params)
+        print(path.paramsArray)
         switch path.httpMethod {
         case .post:
             if let data = path.data {
@@ -68,6 +77,18 @@ public extension APIService {
                     print("exception on converting params to body data \(error)")
                 }
             }
+        case .put:
+            if let data = path.data {
+                print("HTTP Direct data \(String(data: data, encoding: .utf8) ?? "")")
+                request.httpBody = data
+            } else if !needsQueryItems {
+                do {
+                    request.httpBody = try JSONSerialization.data(withJSONObject: path.paramsArray, options: .prettyPrinted)
+                    print("HTTP params data \(String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "")")
+                } catch {
+                    print("exception on converting params to body data \(error)")
+                }
+            }
         default: break
         }
         return apiClient.makeService(request)
@@ -75,12 +96,11 @@ public extension APIService {
             .eraseToAnyPublisher()
     }
     
-    func multiPartAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, Error> {
+    func multiPartAPI<T: Decodable>(_ path: APIPath, imagePath: String, dictString: String) -> AnyPublisher<T, APIError> {
+        let fileData = try! Data(contentsOf: URL(fileURLWithPath: imagePath/*"/Users/ashok.yerra/Downloads/sample.jpg"*/), options: .mappedIfSafe)
+        let fileContent = fileData.base64EncodedString()
         
-        let fileData = try! Data(contentsOf: URL(fileURLWithPath: "/Users/ashok.yerra/Downloads/sample.jpg"), options: .mappedIfSafe)
-        let fileContent = fileData.base64EncodedString() //10485760
-        
-        let formFields = ["profileData": "{\"userId\":3909,\"firstName\":\"mukesh\",\"lastName\":\"qa\",\"dateOfBirth\":\"2007-06-06T00:00:00.000Z\",\"languages\":[{\"name\":\"Arabic\"},{\"name\":\"Danish\"}],\"phone\":\"971529123587\",\"countryId\":101,\"gender\":\"MALE\",\"email\":\"mukesh@qa.team\",\"patientTimeZone\":\"Asia/Dubai\"}"]
+        let formFields = ["profileData": dictString]
         let imageData = fileContent.data(using: .utf8)!
         
         let boundary = "Boundary-\(UUID().uuidString)"
@@ -106,19 +126,15 @@ public extension APIService {
         
         request.httpBody = httpBody as Data
         
-        print(String(data: httpBody as Data, encoding: .utf8)!)
-        
+//        print(String(data: httpBody as Data, encoding: .utf8)!)
+        print(request.url ?? "")
+        print(request.httpMethod ?? "")
+        print(request.allHTTPHeaderFields ?? "")
+        print(path.params)
+
         return apiClient.makeService(request)
             .map(\.value)
             .eraseToAnyPublisher()
-        
-        //        URLSession.shared.dataTask(with: request) { data, response, error in
-        //            guard let data = data else {
-        //                print(String(describing: error))
-        //                return
-        //            }
-        //            print(String(data: data, encoding: .utf8)!)
-        //        }.resume()
     }
     
     private func convertFormField(named name: String, value: String, using boundary: String) -> String {
