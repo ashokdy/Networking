@@ -117,18 +117,3 @@ func fetch<T: Decodable>(url: URL) -> AnyPublisher<T, APIError4> {
         }
         .eraseToAnyPublisher()
 }
-
-// Usage
-//if let url = URL(string: "https://cat-fact.herokuapp.com/facts/random") {
-//    fetch(url: url)
-//        .sink(receiveCompletion: { completion in
-//            switch completion {
-//            case .finished:
-//                break
-//            case .failure(let error):
-//                print("Error: \(error.localizedDescription)")
-//            }
-//        }, receiveValue: { (fact: Fact) in
-//            print(fact.text)
-//        })
-*/

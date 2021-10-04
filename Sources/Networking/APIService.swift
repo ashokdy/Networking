@@ -12,6 +12,7 @@ public protocol APIService {
     var apiClient: APIClient { get }
     var isBasic: Bool { get }
     var needsQueryItems: Bool { get }
+    var needsHeaders: Bool { get }
     var hasData: Bool { get }
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError>
     func multiPartAPI<T: Decodable>(_ path: APIPath, imagePath: String, dictString: String) -> AnyPublisher<T, APIError>
@@ -24,6 +25,7 @@ public extension APIService {
     var needsQueryItems: Bool { false }
     var isBasic: Bool { false }
     var hasData: Bool { false }
+    var needsHeaders: Bool { true }
     
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
@@ -48,15 +50,16 @@ public extension APIService {
             let apiURL = APIServiceConfig.shared.apiData.baseURL + path.subURL
             request = URLRequest(url: URL(string: apiURL.removingPercentEncoding!)!)
         }
-        if hasData {
-            request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
-        } else {
+        if needsHeaders {
+            if hasData {
+                request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
+            }
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        }
-        if isBasic {
-            request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
-        } else {
-            request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
+            if isBasic {
+                request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
+            } else {
+                request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
+            }
         }
         request.httpMethod = path.httpMethod.rawValue
         print(request.url ?? "")
