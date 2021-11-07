@@ -39,7 +39,7 @@ public class MultiPartUpload {
         
         let boundary = "Boundary-\(UUID().uuidString)"
         
-        var request = URLRequest(url: URL(string: "https://dev.healthy-u.ae/api/patients/")!)
+        var request = URLRequest(url: URL(string: "https://dev.healthieru.ae/api/patients/")!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "authorization")

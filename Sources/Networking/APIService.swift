@@ -62,11 +62,11 @@ public extension APIService {
             }
         }
         request.httpMethod = path.httpMethod.rawValue
-        print(request.url ?? "")
-        print(request.httpMethod ?? "")
-        print(request.allHTTPHeaderFields ?? "")
-        print(path.params)
-        print(path.paramsArray)
+        print("URL -> ", request.url ?? "")
+        print("httpMwethod -> ", request.httpMethod ?? "")
+        print("headers -> ", request.allHTTPHeaderFields ?? "")
+        print("params -> ", path.params)
+        print("paramsArray -> ", path.paramsArray)
         switch path.httpMethod {
         case .post:
             if let data = path.data {
@@ -100,15 +100,15 @@ public extension APIService {
     }
     
     func multiPartAPI<T: Decodable>(_ path: APIPath, imagePath: String, dictString: String) -> AnyPublisher<T, APIError> {
-        let fileData = try! Data(contentsOf: URL(fileURLWithPath: imagePath/*"/Users/ashok.yerra/Downloads/sample.jpg"*/), options: .mappedIfSafe)
-        let fileContent = fileData.base64EncodedString()
+        let fileData = try? Data(contentsOf: URL(fileURLWithPath: imagePath/*"/Users/ashok.yerra/Downloads/sample.jpg"*/), options: .mappedIfSafe)
+        let fileContent = fileData?.base64EncodedString()
         
         let formFields = ["profileData": dictString]
-        let imageData = fileContent.data(using: .utf8)!
+        let imageData = fileContent?.data(using: .utf8)!
         
         let boundary = "Boundary-\(UUID().uuidString)"
         
-        var request = URLRequest(url: URL(string: "https://dev.healthy-u.ae/api/patients/")!)
+        var request = URLRequest(url: URL(string: "https://dev.healthieru.ae/api/patients/")!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "authorization")
@@ -122,7 +122,7 @@ public extension APIService {
         httpBody.append(convertFileData(fieldName: "profilePicture",
                                         fileName: "imagename.png",
                                         mimeType: "image/png",
-                                        fileData: imageData,
+                                        fileData: imageData ?? Data(),
                                         using: boundary))
         
         httpBody.appendString("--\(boundary)--")
@@ -130,10 +130,10 @@ public extension APIService {
         request.httpBody = httpBody as Data
         
 //        print(String(data: httpBody as Data, encoding: .utf8)!)
-        print(request.url ?? "")
-        print(request.httpMethod ?? "")
-        print(request.allHTTPHeaderFields ?? "")
-        print(path.params)
+        print("URL -> ", request.url ?? "")
+        print("httpMwethod -> ", request.httpMethod ?? "")
+        print("headers -> ", request.allHTTPHeaderFields ?? "")
+        print("params -> ", path.params)
 
         return apiClient.makeService(request)
             .map(\.value)
