@@ -15,7 +15,7 @@ public protocol APIService {
     var needsHeaders: Bool { get }
     var hasData: Bool { get }
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError>
-    func multiPartAPI<T: Decodable>(_ path: APIPath, imagePath: String, dictString: String) -> AnyPublisher<T, APIError>
+    func multiPartAPI<T: Decodable>(_ path: APIPath, imageKey: String, imagePath: String, dictKey: String, dictString: String) -> AnyPublisher<T, APIError>
 }
 
 public extension APIService {
@@ -99,16 +99,16 @@ public extension APIService {
             .eraseToAnyPublisher()
     }
     
-    func multiPartAPI<T: Decodable>(_ path: APIPath, imagePath: String, dictString: String) -> AnyPublisher<T, APIError> {
+    func multiPartAPI<T: Decodable>(_ path: APIPath, imageKey: String, imagePath: String, dictKey: String, dictString: String) -> AnyPublisher<T, APIError> {
         let fileData = try? Data(contentsOf: URL(fileURLWithPath: imagePath/*"/Users/ashok.yerra/Downloads/sample.jpg"*/), options: .mappedIfSafe)
         let fileContent = fileData?.base64EncodedString()
         
-        let formFields = ["profileData": dictString]
+        let formFields = [dictKey: dictString]
         let imageData = fileContent?.data(using: .utf8)!
         
         let boundary = "Boundary-\(UUID().uuidString)"
         
-        var request = URLRequest(url: URL(string: "https://dev.healthieru.ae/api/patients/")!)
+        var request = URLRequest(url: URL(string: APIServiceConfig.shared.apiData.baseURL + path.subURL)!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "authorization")
@@ -119,7 +119,7 @@ public extension APIService {
             httpBody.appendString(convertFormField(named: key, value: value, using: boundary))
         }
         
-        httpBody.append(convertFileData(fieldName: "profilePicture",
+        httpBody.append(convertFileData(fieldName: imageKey,
                                         fileName: "imagename.png",
                                         mimeType: "image/png",
                                         fileData: imageData ?? Data(),
