@@ -41,7 +41,7 @@ public struct APIClient {
                     print(apierror)
                     return apierror
                 }
-                return APIError(error: "", error_description: "")
+                return APIError(error: error.localizedDescription, error_description: error.localizedDescription)
             })
             .eraseToAnyPublisher()
     }
