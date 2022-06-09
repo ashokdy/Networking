@@ -13,6 +13,7 @@ public protocol APIService {
     var isBasic: Bool { get }
     var needsQueryItems: Bool { get }
     var needsHeaders: Bool { get }
+    var customHeaders: [String: Any] { get }
     var hasData: Bool { get }
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError>
     func multiPartAPI<T: Decodable>(_ path: APIPath, imageKey: String, imagePath: String, dictKey: String, dictString: String) -> AnyPublisher<T, APIError>
@@ -26,6 +27,7 @@ public extension APIService {
     var isBasic: Bool { false }
     var hasData: Bool { false }
     var needsHeaders: Bool { true }
+    var customHeaders: [String: Any] { [:] }
     
     func requestAPI<T: Decodable>(_ path: APIPath) -> AnyPublisher<T, APIError> {
         let baseURL = URL(string: APIServiceConfig.shared.apiData.baseURL)!
@@ -59,6 +61,9 @@ public extension APIService {
                 request.addValue("Basic \(APIServiceConfig.shared.apiData.basicToken)", forHTTPHeaderField: "Authorization")
             } else {
                 request.addValue("Bearer \(APIServiceConfig.shared.apiData.accessToken)", forHTTPHeaderField: "Authorization")
+            }
+            for header in customHeaders {
+                request.addValue("\(header.value)", forHTTPHeaderField: header.key)
             }
         }
         request.httpMethod = path.httpMethod.rawValue
